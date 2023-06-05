@@ -10,6 +10,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/sxc/greenlight/internal/data"
+
 	_ "github.com/lib/pq"
 )
 
@@ -27,9 +29,11 @@ type config struct {
 	}
 }
 
+// Add a models field to the Models type
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -64,6 +68,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	// mux := http.NewServeMux()
