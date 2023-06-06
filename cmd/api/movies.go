@@ -65,6 +65,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 
 	// Craete a new instance of the Movie struct ,
 	// containg the ID we extracted from the URL and some dummy data.
+	// movie, err := app.models.Movies.Get(id)
 	movie, err := app.models.Movies.Get(id)
 	if err != nil {
 		switch {
@@ -192,4 +193,80 @@ func (app *application) deleteMovieHandler(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
+}
+
+// func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
+// 	// Embed the new Filters structure into the request
+// 	var input struct {
+// 		Title  string
+// 		Genres []string
+// 		data.Filters
+// 	}
+
+// 	// Initialize a new Validator instance.
+// 	v := validator.New()
+
+// 	qs := r.URL.Query()
+
+// 	input.Title = app.readString(qs, "title", "")
+// 	input.Genres = app.readCSV(qs, "genres", []string{})
+
+// 	input.Filters.Page = app.readInt(qs, "page", 1, v)
+// 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+// 	input.Filters.Sort = app.readString(qs, "sort", "id")
+
+// 	// Add the supported sort values for this endpoint to the sort safelist.
+// 	input.Filters.SortSafelist = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
+
+// 	// Execute the validation checks on the Filters struct and send a response
+// 	// containing the errors if any.
+// 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+// 		app.failedValidationResponse(w, r, v.Errors)
+// 		return
+// 	}
+
+// 	// Call the GetAll() method to retrieve a list of movies.
+// 	// movies, err := app.models.Movies.GetAll(input.Title, input.Genres, input.Filters)
+// 	// movies, err := app.models.Movies.GetAll()
+// 	movies, err := app.models.Movies.GetAll(input.Title, input.Genres, input.Filters)
+// 	if err != nil {
+// 		app.serverErrorResponse(w, r, err)
+// 		return
+// 	}
+
+// 	err = app.writeJSON(w, http.StatusOK, envelope{"movies": movies}, nil)
+// 	if err != nil {
+// 		app.serverErrorResponse(w, r, err)
+// 	}
+// }
+
+func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Title    string
+		Genres   []string
+		Page     int
+		PageSize int
+		Sort     string
+	}
+
+	v := validator.New()
+
+	qs := r.URL.Query()
+
+	input.Title = app.readString(qs, "title", "")
+	input.Genres = app.readCSV(qs, "genres", []string{})
+
+	input.Page = app.readInt(qs, "page", 1, v)
+	input.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	input.Sort = app.readString(qs, "sort", "id")
+
+	if !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
+
 }
