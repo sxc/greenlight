@@ -17,5 +17,6 @@ func ValidateFilters(v *validator.Validator, f Filters) {
 	v.Check(f.PageSize > 0, "page_size", "must be greater than zero")
 	v.Check(f.PageSize <= 100, "page_size", "must not be greater than 100")
 
+	// Check that the sort parameter matches a value in the safelist.
 	v.Check(validator.In(f.Sort, f.SortSafelist...), "sort", "invalid sort value")
 }

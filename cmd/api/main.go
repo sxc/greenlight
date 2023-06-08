@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sxc/greenlight/internal/data"
+	"github.com/sxc/greenlight/internal/jsonlog"
 
 	_ "github.com/lib/pq"
 )
@@ -32,7 +33,7 @@ type config struct {
 // Add a models field to the Models type
 type application struct {
 	config config
-	logger *log.Logger
+	logger *jsonlog.Logger
 	models data.Models
 }
 
@@ -53,16 +54,16 @@ func main() {
 
 	flag.Parse()
 
-	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
 
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Fatal(err)
+		logger.PrintFatal(err, nil)
 	}
 
 	defer db.Close()
 
-	logger.Printf("database connection pool established")
+	logger.PrintInfo("database connection pool established", nil)
 
 	// Declare an instance of the application struct, containing the config struct and the logger
 	app := &application{
@@ -71,23 +72,23 @@ func main() {
 		models: data.NewModels(db),
 	}
 
-	// mux := http.NewServeMux()
-	// mux.HandleFunc("/v1/healthcheck", app.healthcheckHandler)
-
-	// Use the httprouter instnce returned by app.routes() as server handler
-
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      app.routes(),
+		ErrorLog:     log.New(logger, "", 0),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
 	// Start the HTTP server.
-	logger.Printf("Starting %s server on %s", cfg.env, srv.Addr)
+	logger.PrintInfo("Starting server", map[string]string{
+		"addr": srv.Addr,
+		"env":  cfg.env,
+	})
+
 	err = srv.ListenAndServe()
-	logger.Fatal(err)
+	logger.PrintFatal(err, nil)
 }
 
 func openDB(cfg config) (*sql.DB, error) {

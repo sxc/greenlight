@@ -133,48 +133,6 @@ func (m MovieModel) Delete(id int64) error {
 	return nil
 }
 
-func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
-
-	query := `
-	SELECT id, created_at, title, year, runtime, genres, version 
-	FROM movies
-	ORDER BY id`
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	// Use QueryContext() and pass the context as the first argument.
-	rows, err := m.DB.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	movies := []*Movie{}
-	// Loop through rows, using Scan to assign column data to struct fields.
-	for rows.Next() {
-		var movie Movie
-		err := rows.Scan(
-			&movie.ID,
-			&movie.CreatedAt,
-			&movie.Title,
-			&movie.Year,
-			&movie.Runtime,
-			pq.Array(&movie.Genres),
-			&movie.Version,
-		)
-		if err != nil {
-			return nil, err
-		}
-		movies = append(movies, &movie)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return movies, nil
-}
-
 type Movie struct {
 	ID        int64     `json:"id"`
 	CreatedAt time.Time `json:"-"` // Use the - directive
@@ -222,4 +180,52 @@ func (m MockMovieModel) Delete(id int64) error {
 	return nil
 }
 
-// Createa new GetAll() method which returns a slice of movies.
+func (m MockMovieModel) GetAll(id int64) (*Movie, error) {
+	// Mock
+	return nil, nil
+}
+
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version
+	FROM movies
+	ORDER BY id`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// args := []any{title, pq.Array(genres)}
+
+	rows, err := m.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	movies := []*Movie{}
+
+	for rows.Next() {
+		var movie Movie
+		err := rows.Scan(
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		movies = append(movies, &movie)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return movies, nil
+}
